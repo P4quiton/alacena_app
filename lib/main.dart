@@ -1,10 +1,33 @@
 import 'package:flutter/material.dart';
 
+import 'core/notifications/notification_service.dart';
+import 'features/alarms/screens/caducan_hoy_screen.dart';
 import 'features/inventory/screens/inventory_screen.dart';
 
-void main() {
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+void _abrirCaducanHoy() {
+  navigatorKey.currentState?.push(
+    MaterialPageRoute(builder: (_) => const CaducanHoyScreen()),
+  );
+}
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final abrirHoy = await NotificationService.instance.inicializar(
+    alTocarNotificacion: _abrirCaducanHoy,
+  );
+
   runApp(const MyApp());
+
+  // Si la app se abrió desde la notificación, mostrar la pantalla.
+  if (abrirHoy) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _abrirCaducanHoy());
+  }
+
+  NotificationService.instance.pedirPermisos();
+
 }
 
 class MyApp extends StatelessWidget {
@@ -16,6 +39,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'Alacena App',
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

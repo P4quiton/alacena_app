@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../../core/notifications/notification_service.dart';
 import '../../calendar/screens/calendar_screen.dart';
 import '../../../data/repositories/carrito_repository.dart';
 import '../../cart/screens/cart_screen.dart';
@@ -15,6 +16,7 @@ import 'categories_screen.dart';
 import 'product_form_screen.dart';
 import 'product_detail_screen.dart';
 import 'package:badges/badges.dart' as badges;
+
 
 enum EstadoInventario { caducado, agotado, porCaducar, porAgotarse, disponible }
 
@@ -53,6 +55,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     super.initState();
     _futureProductos = _cargarProductos();
     _actualizarCarrito();
+    NotificationService.instance.reprogramar();
   }
 
   Future<List<ResumenProducto>> _cargarProductos() async {
@@ -140,6 +143,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     });
 
     await consulta;
+    await NotificationService.instance.reprogramar();
   }
 
   void _mostrarMensaje(String mensaje) {
