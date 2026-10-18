@@ -8,6 +8,7 @@ import '../../../data/models/producto.dart';
 import '../../../data/repositories/categoria_repository.dart';
 import '../../../data/repositories/lote_repository.dart';
 import '../../../data/repositories/producto_repository.dart';
+import 'product_form_screen.dart';
 
 class _DetalleProducto {
   final Producto producto;
@@ -68,6 +69,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     setState(() {
       _futureDetalle = _cargar();
     });
+  }
+
+  Future<void> _editar() async {
+    try {
+      final detalle = await _futureDetalle;
+      if (!mounted) return;
+
+      final guardado = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => ProductFormScreen(producto: detalle.producto),
+        ),
+      );
+
+      if (guardado == true && mounted) {
+        _recargar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Producto actualizado')),
+        );
+      }
+    } catch (_) {
+      // Si el producto no se pudo cargar, no hay nada que editar.
+    }
   }
 
   // Consumir unidades usando FEFO (primero el lote que caduca antes).
@@ -160,7 +183,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalle del producto')),
+      appBar: AppBar(
+        title: const Text('Detalle del producto'),
+        actions: [
+          IconButton(
+            tooltip: 'Editar producto',
+            onPressed: _editar,
+            icon: const Icon(Icons.edit_outlined),
+          ),
+        ],
+      ),
       body: FutureBuilder<_DetalleProducto>(
         future: _futureDetalle,
         builder: (context, snapshot) {
@@ -321,7 +353,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
     );
   }
-  
+
   Widget _imagen(String? ruta) {
     if (ruta == null || ruta.isEmpty) return _imagenPredeterminada();
 

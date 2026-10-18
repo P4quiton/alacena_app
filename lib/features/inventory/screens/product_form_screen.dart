@@ -11,7 +11,9 @@ import '../../../data/repositories/categoria_repository.dart';
 import '../../../data/repositories/producto_repository.dart';
 
 class ProductFormScreen extends StatefulWidget {
-  const ProductFormScreen({super.key});
+  final Producto? producto;
+
+  const ProductFormScreen({super.key, this.producto});
 
   @override
   State<ProductFormScreen> createState() => _ProductFormScreenState();
@@ -32,11 +34,20 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   int? _categoriaSeleccionada;
   XFile? _imagenSeleccionada;
   bool _guardando = false;
+  bool get _esEdicion => widget.producto != null;
 
   @override
   void initState() {
     super.initState();
     _categoriasFuture = _categoriaRepository.obtenerTodas();
+
+    final producto = widget.producto;
+    if (producto != null) {
+      _nombreController.text = producto.nombre;
+      _descripcionController.text = producto.descripcion ?? '';
+      _stockMinimoController.text = '${producto.stockMinimo}';
+      _categoriaSeleccionada = producto.categoriaId;
+    }
   }
 
   @override
@@ -96,15 +107,40 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     try {
       imagenGuardada = await _guardarImagenLocal();
 
-      final producto = Producto(
-        categoriaId: _categoriaSeleccionada!,
-        nombre: _nombreController.text.trim(),
-        descripcion: _descripcionController.text.trim(),
-        imagenPath: imagenGuardada,
-        stockMinimo: int.parse(_stockMinimoController.text.trim()),
-      );
+      final original = widget.producto;
 
-      await _productoRepository.insertar(producto);
+      if (original == null) {
+        await _productoRepository.insertar(
+          Producto(
+            categoriaId: _categoriaSeleccionada!,
+            nombre: _nombreController.text.trim(),
+            descripcion: _descripcionController.text.trim(),
+            imagenPath: imagenGuardada,
+            stockMinimo: int.parse(_stockMinimoController.text.trim()),
+          ),
+        );
+      } else {
+        await _productoRepository.actualizar(
+          original.copyWith(
+            categoriaId: _categoriaSeleccionada!,
+            nombre: _nombreController.text.trim(),
+            descripcion: _descripcionController.text.trim(),
+            imagenPath: imagenGuardada ?? original.imagenPath,
+            stockMinimo: int.parse(_stockMinimoController.text.trim()),
+          ),
+        );
+
+        // Si se cambió la foto, borrar la anterior para no dejar huérfanos.
+        final anterior = original.imagenPath;
+        if (imagenGuardada != null && anterior != null && anterior.isNotEmpty) {
+          try {
+            final archivo = File(anterior);
+            if (await archivo.exists()) await archivo.delete();
+          } catch (_) {
+            // La limpieza no debe ocultar que el guardado salió bien.
+          }
+        }
+      }
 
       if (!mounted) return;
       Navigator.of(context).pop(true);
@@ -135,10 +171,36 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         .showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
+    Widget _vistaPreviaImagen() {
+    final actual = widget.producto?.imagenPath;
+
+    final ruta =
+        _imagenSeleccionada?.path ??
+        ((actual != null && actual.isNotEmpty) ? actual : null);
+
+    if (ruta == null) {
+      return const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.add_a_photo_outlined, size: 42, color: Color(0xFF51865D)),
+          SizedBox(height: 8),
+          Text('Seleccionar imagen'),
+        ],
+      );
+    }
+
+    return Image.file(
+      File(ruta),
+      fit: BoxFit.cover,
+      errorBuilder: (_, error, stack) =>
+          const Center(child: Text('No se pudo mostrar la imagen')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nuevo producto')),
+      appBar: AppBar(title: Text(_esEdicion ? 'Editar producto' : 'Nuevo producto'),),
       body: FutureBuilder<List<Categoria>>(
         future: _categoriasFuture,
         builder: (context, snapshot) {
@@ -209,29 +271,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           clipBehavior: Clip.antiAlias,
-                          child: _imagenSeleccionada == null
-                              ? const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.add_a_photo_outlined,
-                                      size: 42,
-                                      color: Color(0xFF51865D),
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text('Seleccionar imagen'),
-                                  ],
-                                )
-                              : Image.file(
-                                  File(_imagenSeleccionada!.path),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, error, stack) =>
-                                      const Center(
-                                        child: Text(
-                                          'No se pudo mostrar la imagen',
-                                        ),
-                                      ),
-                                ),
+                          child: _vistaPreviaImagen(),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -316,7 +356,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                           label: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             child: Text(
-                              _guardando ? 'Guardando...' : 'Guardar producto',
+                              _guardando ? 'Guardando...' : _esEdicion ? 'Guardar cambios' : 'Guardar producto',
                             ),
                           ),
                         ),
