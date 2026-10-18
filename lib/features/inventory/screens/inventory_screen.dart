@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../../data/repositories/carrito_repository.dart';
+import '../../cart/screens/cart_screen.dart';
 import '../../../data/models/lote.dart';
 import '../../../data/models/producto.dart';
 import '../../../data/repositories/lote_repository.dart';
@@ -11,6 +13,7 @@ import '../../purchases/screens/stores_screen.dart';
 import 'categories_screen.dart';
 import 'product_form_screen.dart';
 import 'product_detail_screen.dart';
+import 'package:badges/badges.dart' as badges;
 
 enum EstadoInventario { caducado, agotado, porCaducar, porAgotarse, disponible }
 
@@ -38,6 +41,9 @@ class InventoryScreen extends StatefulWidget {
 class _InventoryScreenState extends State<InventoryScreen> {
   final ProductoRepository _productoRepository = ProductoRepository();
   final LoteRepository _loteRepository = LoteRepository();
+  final CarritoRepository _carritoRepository = CarritoRepository();
+  int _productosEnCarrito = 0;
+  bool _soloAlertas = true;
 
   late Future<List<ResumenProducto>> _futureProductos;
 
@@ -45,6 +51,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   void initState() {
     super.initState();
     _futureProductos = _cargarProductos();
+    _actualizarCarrito();
   }
 
   Future<List<ResumenProducto>> _cargarProductos() async {
@@ -202,6 +209,32 @@ class _InventoryScreenState extends State<InventoryScreen> {
     await _actualizar();
   }
 
+  Future<void> _actualizarCarrito() async {
+    final total = await _carritoRepository.contarProductos();
+    if (!mounted) return;
+
+    setState(() => _productosEnCarrito = total);
+  }
+
+  Future<void> _agregarAlCarrito(Producto producto) async {
+    try {
+      await _carritoRepository.agregarProducto(producto.id!);
+      await _actualizarCarrito();
+      _mostrarMensaje('${producto.nombre} agregado al carrito');
+    } catch (_) {
+      _mostrarMensaje('No se pudo agregar al carrito');
+    }
+  }
+
+  Future<void> _abrirCarrito() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const CartScreen()),
+    );
+
+    if (!mounted) return;
+    await _actualizarCarrito();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,6 +249,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
           future: _futureProductos,
           builder: (context, snapshot) {
             final productos = snapshot.data ?? [];
+              final visibles = _soloAlertas
+                ? productos
+                      .where((p) => p.estado != EstadoInventario.disponible)
+                      .toList()
+                : productos;
             final cargando =
                 snapshot.connectionState == ConnectionState.waiting;
 
@@ -226,10 +264,24 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   floating: true,
                   expandedHeight: 115,
                   actions: [
-                    IconButton(
-                      tooltip: 'Registrar compra',
-                      onPressed: () => _abrirCompra(),
-                      icon: const Icon(Icons.add_shopping_cart_outlined),
+                      IconButton(
+                      tooltip: 'Carrito de compras',
+                      onPressed: _abrirCarrito,
+                      icon: badges.Badge(
+                        showBadge: _productosEnCarrito > 0,
+                        position: badges.BadgePosition.topEnd(
+                          top: -10,
+                          end: -8,
+                        ),
+                        badgeContent: Text(
+                          '$_productosEnCarrito',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                        ),
+                        child: const Icon(Icons.shopping_cart_outlined),
+                      ),
                     ),
                     PopupMenuButton<String>(
                       tooltip: 'Administrar alacena',
@@ -300,6 +352,31 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     ),
                   ),
                 ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: SegmentedButton<bool>(
+                      segments: const [
+                        ButtonSegment(
+                          value: true,
+                          label: Text('Alertas'),
+                          icon: Icon(Icons.notification_important_outlined),
+                        ),
+                        ButtonSegment(
+                          value: false,
+                          label: Text('Todos'),
+                          icon: Icon(Icons.list),
+                        ),
+                      ],
+                      selected: {_soloAlertas},
+                      onSelectionChanged: (seleccion) {
+                        setState(() => _soloAlertas = seleccion.first);
+                      },
+                    ),
+                  ),
+                ),
+
                 if (cargando)
                   const SliverFillRemaining(
                     child: Center(child: CircularProgressIndicator()),
@@ -323,13 +400,24 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           'a organizar tus artículos.',
                     ),
                   )
+
+                else if (visibles.isEmpty)
+                  SliverFillRemaining(
+                    child: _mensaje(
+                      Icons.check_circle_outline,
+                      'Todo en orden',
+                      'No hay productos caducados, agotados ni por caducar. '
+                          'Cambia a "Todos" para ver tu inventario.',
+                    ),
+                  )
+                  
                 else
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
                     sliver: SliverList.builder(
-                      itemCount: productos.length,
+                      itemCount: visibles.length,
                       itemBuilder: (context, index) {
-                        return _tarjetaProducto(productos[index]);
+                        return _tarjetaProducto(visibles[index]);
                       },
                     ),
                   ),
@@ -457,11 +545,19 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         ),
                         const Spacer(),
                         IconButton(
+                          tooltip: 'Agregar ${producto.nombre} al carrito',
+                          onPressed: () => _agregarAlCarrito(producto),
+                          icon: const Icon(
+                            Icons.add_shopping_cart_outlined,
+                            color: Color(0xFF51865D),
+                          ),
+                        ),
+                        IconButton(
                           tooltip: 'Registrar compra de ${producto.nombre}',
                           onPressed: () =>
                               _abrirCompra(productoId: producto.id),
                           icon: const Icon(
-                            Icons.add_shopping_cart_outlined,
+                            Icons.receipt_long_outlined,
                             color: Color(0xFF51865D),
                           ),
                         ),
