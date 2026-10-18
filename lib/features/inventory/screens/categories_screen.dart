@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -32,9 +31,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   void _mostrarMensaje(String mensaje) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensaje)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   Future<void> _mostrarFormulario({Categoria? categoria}) async {
@@ -75,20 +73,15 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          esEdicion
-                              ? 'Editar categoría'
-                              : 'Nueva categoría',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
+                          esEdicion ? 'Editar categoría' : 'Nueva categoría',
+                          style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 20),
                         TextFormField(
                           controller: nombreController,
                           maxLength: 60,
-                          textCapitalization:
-                              TextCapitalization.sentences,
+                          textCapitalization: TextCapitalization.sentences,
                           decoration: const InputDecoration(
                             labelText: 'Nombre',
                             hintText: 'Ej. Lácteos',
@@ -130,8 +123,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                     final datos = Categoria(
                                       id: categoria?.id,
                                       nombre: nombreController.text.trim(),
-                                      descripcion:
-                                          descripcionController.text.trim(),
+                                      descripcion: descripcionController.text
+                                          .trim(),
                                     );
 
                                     try {
@@ -152,23 +145,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                           ? 'Ya existe una categoría con ese nombre.'
                                           : 'No se pudo guardar la categoría.';
 
-                                      ScaffoldMessenger.of(
-                                        modalContext,
-                                      ).showSnackBar(
-                                        SnackBar(content: Text(mensaje)),
-                                      );
+                                      ScaffoldMessenger.of(modalContext)
+                                          .showSnackBar(
+                                            SnackBar(content: Text(mensaje)),
+                                          );
                                     } catch (_) {
                                       if (!modalContext.mounted) return;
 
-                                      ScaffoldMessenger.of(
-                                        modalContext,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Ocurrió un error al guardar.',
-                                          ),
-                                        ),
-                                      );
+                                      ScaffoldMessenger.of(modalContext)
+                                          .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Ocurrió un error al guardar.',
+                                              ),
+                                            ),
+                                          );
                                     } finally {
                                       if (modalContext.mounted) {
                                         setModalState(() {
@@ -206,6 +197,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         );
       }
     } finally {
+      await Future<void>.delayed(const Duration(milliseconds: 400));
       nombreController.dispose();
       descripcionController.dispose();
     }
@@ -255,9 +247,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Categorías'),
-      ),
+      appBar: AppBar(title: const Text('Categorías')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _mostrarFormulario(),
         icon: const Icon(Icons.add),
@@ -350,9 +340,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         ),
                         title: Text(
                           categoria.nombre,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: categoria.descripcion?.isNotEmpty == true
                             ? Text(categoria.descripcion!)

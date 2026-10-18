@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -96,11 +95,8 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
   }
 
   Future<void> _abrirTiendas() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const StoresScreen(),
-      ),
-    );
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const StoresScreen()));
 
     if (!mounted) return;
     await _cargarDatos();
@@ -141,9 +137,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
   }
 
   void _mensaje(String texto) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(texto)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
   }
 
   Future<void> _guardar() async {
@@ -275,9 +269,8 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                                     _productoSeleccionado = valor;
                                   });
                                 },
-                          validator: (valor) => valor == null
-                              ? 'Selecciona un producto'
-                              : null,
+                          validator: (valor) =>
+                              valor == null ? 'Selecciona un producto' : null,
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<int>(
@@ -323,9 +316,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                           ],
                           decoration: const InputDecoration(
                             labelText: 'Cantidad comprada',
-                            prefixIcon: Icon(
-                              Icons.production_quantity_limits,
-                            ),
+                            prefixIcon: Icon(Icons.production_quantity_limits),
                           ),
                           validator: (valor) {
                             final cantidad = int.tryParse(valor ?? '');
@@ -394,9 +385,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                             onPressed: _guardando ? null : _guardar,
                             icon: const Icon(Icons.save_outlined),
                             label: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               child: Text(
                                 _guardando
                                     ? 'Registrando...'

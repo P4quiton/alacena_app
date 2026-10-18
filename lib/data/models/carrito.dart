@@ -1,14 +1,9 @@
-
 class Carrito {
   final int? id;
   final DateTime fechaCreacion;
   final String estado;
 
-  const Carrito({
-    this.id,
-    required this.fechaCreacion,
-    this.estado = 'activo',
-  });
+  const Carrito({this.id, required this.fechaCreacion, this.estado = 'activo'});
 
   Map<String, dynamic> toMap() {
     return {
@@ -26,11 +21,7 @@ class Carrito {
     );
   }
 
-  Carrito copyWith({
-    int? id,
-    DateTime? fechaCreacion,
-    String? estado,
-  }) {
+  Carrito copyWith({int? id, DateTime? fechaCreacion, String? estado}) {
     return Carrito(
       id: id ?? this.id,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,

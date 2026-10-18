@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -32,15 +31,12 @@ class _StoresScreenState extends State<StoresScreen> {
   void _mostrarMensaje(String mensaje) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensaje)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   Future<void> _mostrarFormulario({Tienda? tienda}) async {
-    final nombreController = TextEditingController(
-      text: tienda?.nombre ?? '',
-    );
+    final nombreController = TextEditingController(text: tienda?.nombre ?? '');
 
     final direccionController = TextEditingController(
       text: tienda?.direccion ?? '',
@@ -76,29 +72,21 @@ class _StoresScreenState extends State<StoresScreen> {
                       children: [
                         Text(
                           esEdicion ? 'Editar tienda' : 'Nueva tienda',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 20),
                         TextFormField(
                           controller: nombreController,
                           maxLength: 80,
-                          textCapitalization:
-                              TextCapitalization.words,
+                          textCapitalization: TextCapitalization.words,
                           decoration: const InputDecoration(
                             labelText: 'Nombre de la tienda',
                             hintText: 'Ej. Soriana',
-                            prefixIcon: Icon(
-                              Icons.store_outlined,
-                            ),
+                            prefixIcon: Icon(Icons.store_outlined),
                           ),
                           validator: (valor) {
-                            if (valor == null ||
-                                valor.trim().isEmpty) {
+                            if (valor == null || valor.trim().isEmpty) {
                               return 'Ingresa el nombre de la tienda';
                             }
                             return null;
@@ -112,9 +100,7 @@ class _StoresScreenState extends State<StoresScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Dirección (opcional)',
                             hintText: 'Ej. Av. Principal 100',
-                            prefixIcon: Icon(
-                              Icons.location_on_outlined,
-                            ),
+                            prefixIcon: Icon(Icons.location_on_outlined),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -124,8 +110,7 @@ class _StoresScreenState extends State<StoresScreen> {
                             onPressed: guardando
                                 ? null
                                 : () async {
-                                    if (!formKey.currentState!
-                                        .validate()) {
+                                    if (!formKey.currentState!.validate()) {
                                       return;
                                     }
 
@@ -135,43 +120,35 @@ class _StoresScreenState extends State<StoresScreen> {
 
                                     final datos = Tienda(
                                       id: tienda?.id,
-                                      nombre:
-                                          nombreController.text.trim(),
-                                      direccion:
-                                          direccionController.text.trim(),
+                                      nombre: nombreController.text.trim(),
+                                      direccion: direccionController.text
+                                          .trim(),
                                     );
 
                                     try {
                                       if (esEdicion) {
-                                        await _repository.actualizar(
-                                          datos,
-                                        );
+                                        await _repository.actualizar(datos);
                                       } else {
-                                        await _repository.insertar(
-                                          datos,
-                                        );
+                                        await _repository.insertar(datos);
                                       }
 
                                       if (modalContext.mounted) {
-                                        Navigator.of(modalContext)
-                                            .pop(true);
+                                        Navigator.of(modalContext).pop(true);
                                       }
                                     } catch (_) {
                                       if (modalContext.mounted) {
-                                        ScaffoldMessenger.of(
-                                          modalContext,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'No se pudo guardar '
-                                              'la tienda.',
-                                            ),
-                                          ),
-                                        );
+                                        ScaffoldMessenger.of(modalContext)
+                                            .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'No se pudo guardar '
+                                                  'la tienda.',
+                                                ),
+                                              ),
+                                            );
                                       }
                                     } finally {
-                                      if (modalContext.mounted &&
-                                          guardando) {
+                                      if (modalContext.mounted && guardando) {
                                         setModalState(() {
                                           guardando = false;
                                         });
@@ -183,8 +160,8 @@ class _StoresScreenState extends State<StoresScreen> {
                               guardando
                                   ? 'Guardando...'
                                   : esEdicion
-                                      ? 'Guardar cambios'
-                                      : 'Crear tienda',
+                                  ? 'Guardar cambios'
+                                  : 'Crear tienda',
                             ),
                           ),
                         ),
@@ -207,6 +184,7 @@ class _StoresScreenState extends State<StoresScreen> {
         );
       }
     } finally {
+      await Future<void>.delayed(const Duration(milliseconds: 400));
       nombreController.dispose();
       direccionController.dispose();
     }
@@ -258,9 +236,7 @@ class _StoresScreenState extends State<StoresScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis tiendas'),
-      ),
+      appBar: AppBar(title: const Text('Mis tiendas')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _mostrarFormulario(),
         icon: const Icon(Icons.add),
@@ -270,9 +246,7 @@ class _StoresScreenState extends State<StoresScreen> {
         future: _tiendas,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -280,9 +254,7 @@ class _StoresScreenState extends State<StoresScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'No se pudieron cargar las tiendas',
-                  ),
+                  const Text('No se pudieron cargar las tiendas'),
                   const SizedBox(height: 12),
                   FilledButton(
                     onPressed: _cargarTiendas,
@@ -330,12 +302,7 @@ class _StoresScreenState extends State<StoresScreen> {
           return CustomScrollView(
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  12,
-                  16,
-                  100,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
                 sliver: SliverList.builder(
                   itemCount: tiendas.length,
                   itemBuilder: (context, index) {
@@ -344,8 +311,7 @@ class _StoresScreenState extends State<StoresScreen> {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
                         ),
@@ -358,16 +324,11 @@ class _StoresScreenState extends State<StoresScreen> {
                         ),
                         title: Text(
                           tienda.nombre,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle:
-                            tienda.direccion?.isNotEmpty == true
-                                ? Text(tienda.direccion!)
-                                : const Text(
-                                    'Sin dirección registrada',
-                                  ),
+                        subtitle: tienda.direccion?.isNotEmpty == true
+                            ? Text(tienda.direccion!)
+                            : const Text('Sin dirección registrada'),
                         trailing: PopupMenuButton<String>(
                           tooltip: 'Opciones de tienda',
                           onSelected: (opcion) {

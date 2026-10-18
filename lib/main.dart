@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'features/inventory/screens/inventory_screen.dart';
 
 void main() {

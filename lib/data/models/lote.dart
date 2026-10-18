@@ -1,4 +1,3 @@
-
 class Lote {
   final int? id;
   final int productoId;

@@ -1,4 +1,3 @@
-
 class CarritoDetalle {
   final int? id;
   final int carritoId;

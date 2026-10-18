@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -76,7 +75,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
 
     final extension = p.extension(_imagenSeleccionada!.path);
-    final nombre = 'producto_${DateTime.now().microsecondsSinceEpoch}'
+    final nombre =
+        'producto_${DateTime.now().microsecondsSinceEpoch}'
         '$extension';
 
     final destino = p.join(carpeta.path, nombre);
@@ -131,9 +131,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   void _mostrarMensaje(String mensaje) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensaje)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   @override
@@ -157,8 +156,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   FilledButton(
                     onPressed: () {
                       setState(() {
-                        _categoriasFuture =
-                            _categoriaRepository.obtenerTodas();
+                        _categoriasFuture = _categoriaRepository.obtenerTodas();
                       });
                     },
                     child: const Text('Reintentar'),
@@ -229,10 +227,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, error, stack) =>
                                       const Center(
-                                    child: Text(
-                                      'No se pudo mostrar la imagen',
-                                    ),
-                                  ),
+                                        child: Text(
+                                          'No se pudo mostrar la imagen',
+                                        ),
+                                      ),
                                 ),
                         ),
                       ),
@@ -318,9 +316,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                           label: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             child: Text(
-                              _guardando
-                                  ? 'Guardando...'
-                                  : 'Guardar producto',
+                              _guardando ? 'Guardando...' : 'Guardar producto',
                             ),
                           ),
                         ),

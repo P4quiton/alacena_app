@@ -1,4 +1,3 @@
-
 class HistorialCompra {
   final int? id;
   final int productoId;

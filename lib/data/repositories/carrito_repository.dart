@@ -1,4 +1,3 @@
-
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/database/database_helper.dart';
@@ -9,9 +8,7 @@ class CarritoRepository {
   Future<Database> get _db async => DatabaseHelper.instance.database;
 
   // Buscar el carrito activo o crear uno nuevo.
-  Future<int> _obtenerOCrearActivo(
-    Transaction txn,
-  ) async {
+  Future<int> _obtenerOCrearActivo(Transaction txn) async {
     final registros = await txn.query(
       'carrito',
       where: 'estado = ?',
@@ -32,10 +29,7 @@ class CarritoRepository {
 
   // Agregar un producto al carrito.
   // Si ya existe, incrementar su cantidad.
-  Future<void> agregarProducto(
-    int productoId, {
-    int cantidad = 1,
-  }) async {
+  Future<void> agregarProducto(int productoId, {int cantidad = 1}) async {
     if (cantidad <= 0) {
       throw ArgumentError('La cantidad debe ser mayor que cero.');
     }
@@ -106,10 +100,7 @@ class CarritoRepository {
   }
 
   // Cambiar la cantidad deseada de un producto.
-  Future<int> actualizarCantidad(
-    int productoId,
-    int cantidad,
-  ) async {
+  Future<int> actualizarCantidad(int productoId, int cantidad) async {
     if (cantidad <= 0) {
       throw ArgumentError('La cantidad debe ser mayor que cero.');
     }
@@ -166,10 +157,7 @@ class CarritoRepository {
   Future<int> contarUnidades() async {
     final detalles = await obtenerDetalles();
 
-    return detalles.fold<int>(
-      0,
-      (total, detalle) => total + detalle.cantidad,
-    );
+    return detalles.fold<int>(0, (total, detalle) => total + detalle.cantidad);
   }
 
   // Marcar la lista de compras como completada.

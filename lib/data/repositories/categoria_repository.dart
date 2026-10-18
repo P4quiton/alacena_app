@@ -1,4 +1,3 @@
-
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/database/database_helper.dart';
@@ -66,10 +65,6 @@ class CategoriaRepository {
   Future<int> eliminar(int id) async {
     final db = await _db;
 
-    return db.delete(
-      'categorias',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete('categorias', where: 'id = ?', whereArgs: [id]);
   }
 }

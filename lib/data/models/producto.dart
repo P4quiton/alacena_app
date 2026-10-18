@@ -1,4 +1,3 @@
-
 class Producto {
   final int? id;
   final int categoriaId;

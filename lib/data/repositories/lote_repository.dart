@@ -1,4 +1,3 @@
-
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/database/database_helper.dart';
@@ -75,17 +74,11 @@ class LoteRepository {
   Future<int> eliminar(int id) async {
     final db = await _db;
 
-    return db.delete(
-      'lotes',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete('lotes', where: 'id = ?', whereArgs: [id]);
   }
 
   // Obtener lotes próximos a caducar.
-  Future<List<Lote>> obtenerProximosACaducar({
-    int diasAnticipacion = 3,
-  }) async {
+  Future<List<Lote>> obtenerProximosACaducar({int diasAnticipacion = 3}) async {
     if (diasAnticipacion < 0) {
       throw ArgumentError('Los días de anticipación no pueden ser negativos.');
     }
@@ -160,9 +153,7 @@ class LoteRepository {
       );
 
       if (disponible < cantidad) {
-        throw StateError(
-          'Existencias insuficientes o productos caducados.',
-        );
+        throw StateError('Existencias insuficientes o productos caducados.');
       }
 
       var restante = cantidad;

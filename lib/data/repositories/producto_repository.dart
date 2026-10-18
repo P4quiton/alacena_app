@@ -1,4 +1,3 @@
-
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/database/database_helper.dart';
@@ -81,11 +80,7 @@ class ProductoRepository {
   Future<int> eliminar(int id) async {
     final db = await _db;
 
-    return db.delete(
-      'productos',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return db.delete('productos', where: 'id = ?', whereArgs: [id]);
   }
 
   // Calcular las existencias totales del producto.

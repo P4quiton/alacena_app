@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -11,14 +10,9 @@ import '../../purchases/screens/purchase_form_screen.dart';
 import '../../purchases/screens/stores_screen.dart';
 import 'categories_screen.dart';
 import 'product_form_screen.dart';
+import 'product_detail_screen.dart';
 
-enum EstadoInventario {
-  caducado,
-  agotado,
-  porCaducar,
-  porAgotarse,
-  disponible,
-}
+enum EstadoInventario { caducado, agotado, porCaducar, porAgotarse, disponible }
 
 class ResumenProducto {
   final Producto producto;
@@ -66,10 +60,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         producto.id!,
       );
 
-      final stock = lotes.fold<int>(
-        0,
-        (total, lote) => total + lote.cantidad,
-      );
+      final stock = lotes.fold<int>(0, (total, lote) => total + lote.cantidad);
 
       final caducados = lotes.where(
         (lote) => lote.fechaCaducidad.isBefore(hoy),
@@ -113,8 +104,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     };
 
     resultados.sort((a, b) {
-      final diferencia =
-          prioridad[a.estado]!.compareTo(prioridad[b.estado]!);
+      final diferencia = prioridad[a.estado]!.compareTo(prioridad[b.estado]!);
 
       if (diferencia != 0) return diferencia;
 
@@ -129,8 +119,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   DateTime? _primeraCaducidad(List<Lote> lotes) {
     if (lotes.isEmpty) return null;
 
-    final fechas = lotes.map((lote) => lote.fechaCaducidad).toList()
-      ..sort();
+    final fechas = lotes.map((lote) => lote.fechaCaducidad).toList()..sort();
 
     return fechas.first;
   }
@@ -148,18 +137,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
   void _mostrarMensaje(String mensaje) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensaje)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   // Registrar un producto nuevo.
   Future<void> _abrirNuevoProducto() async {
-    final guardado = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => const ProductFormScreen(),
-      ),
-    );
+    final guardado = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const ProductFormScreen()));
 
     if (!mounted) return;
 
@@ -173,9 +159,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Future<void> _abrirCompra({int? productoId}) async {
     final guardado = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => PurchaseFormScreen(
-          productoId: productoId,
-        ),
+        builder: (_) => PurchaseFormScreen(productoId: productoId),
       ),
     );
 
@@ -189,11 +173,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   // Administrar categorías.
   Future<void> _abrirCategorias() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => const CategoriesScreen(),
-      ),
-    );
+    await Navigator.of(
+      context,
+    ).push<void>(MaterialPageRoute(builder: (_) => const CategoriesScreen()));
 
     if (!mounted) return;
     await _actualizar();
@@ -201,9 +183,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   // Administrar tiendas.
   Future<void> _abrirTiendas() async {
+    await Navigator.of(context)
+        .push<void>(MaterialPageRoute(builder: (_) => const StoresScreen()));
+
+    if (!mounted) return;
+    await _actualizar();
+  }
+
+  // Abrir el detalle de un producto.
+  Future<void> _abrirDetalle(int productoId) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (_) => const StoresScreen(),
+        builder: (_) => ProductDetailScreen(productoId: productoId),
       ),
     );
 
@@ -283,10 +274,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     const SizedBox(width: 8),
                   ],
                   flexibleSpace: const FlexibleSpaceBar(
-                    titlePadding: EdgeInsets.only(
-                      left: 20,
-                      bottom: 16,
-                    ),
+                    titlePadding: EdgeInsets.only(left: 20, bottom: 16),
                     title: Text(
                       'Mi alacena',
                       style: TextStyle(
@@ -298,9 +286,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                  sliver: SliverToBoxAdapter(
-                    child: _resumenGeneral(productos),
-                  ),
+                  sliver: SliverToBoxAdapter(child: _resumenGeneral(productos)),
                 ),
                 const SliverPadding(
                   padding: EdgeInsets.fromLTRB(20, 20, 20, 12),
@@ -316,9 +302,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
                 if (cargando)
                   const SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    child: Center(child: CircularProgressIndicator()),
                   )
                 else if (snapshot.hasError)
                   SliverFillRemaining(
@@ -341,12 +325,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                      16,
-                      0,
-                      16,
-                      110,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
                     sliver: SliverList.builder(
                       itemCount: productos.length,
                       itemBuilder: (context, index) {
@@ -363,9 +342,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Widget _resumenGeneral(List<ResumenProducto> productos) {
-    final alertas = productos.where(
-      (producto) => producto.estado != EstadoInventario.disponible,
-    ).length;
+    final alertas = productos
+        .where((producto) => producto.estado != EstadoInventario.disponible)
+        .length;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -391,10 +370,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               children: [
                 const Text(
                   'Resumen de tu alacena',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 5),
                 Text('${productos.length} productos registrados'),
@@ -419,80 +395,83 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(13),
-              child: SizedBox(
-                width: 76,
-                height: 76,
-                child: _imagenProducto(producto.imagenPath),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _abrirDetalle(producto.id!),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(13),
+                child: SizedBox(
+                  width: 76,
+                  height: 76,
+                  child: _imagenProducto(producto.imagenPath),
+                ),
               ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    producto.nombre,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text('Existencias: ${resumen.stock}'),
-                  if (resumen.proximaCaducidad != null)
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'Caducidad: '
-                      '${_fechaVisible(resumen.proximaCaducidad!)}',
-                      style: const TextStyle(fontSize: 12),
+                      producto.nombre,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  const SizedBox(height: 7),
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _nombreEstado(resumen.estado),
-                            style: TextStyle(
-                              color: color,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                    const SizedBox(height: 5),
+                    Text('Existencias: ${resumen.stock}'),
+                    if (resumen.proximaCaducidad != null)
+                      Text(
+                        'Caducidad: '
+                        '${_fechaVisible(resumen.proximaCaducidad!)}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    const SizedBox(height: 7),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _nombreEstado(resumen.estado),
+                              style: TextStyle(
+                                color: color,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        tooltip: 'Registrar compra de ${producto.nombre}',
-                        onPressed: () => _abrirCompra(
-                          productoId: producto.id,
+                        const Spacer(),
+                        IconButton(
+                          tooltip: 'Registrar compra de ${producto.nombre}',
+                          onPressed: () =>
+                              _abrirCompra(productoId: producto.id),
+                          icon: const Icon(
+                            Icons.add_shopping_cart_outlined,
+                            color: Color(0xFF51865D),
+                          ),
                         ),
-                        icon: const Icon(
-                          Icons.add_shopping_cart_outlined,
-                          color: Color(0xFF51865D),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -536,25 +515,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icono,
-              size: 65,
-              color: const Color(0xFF80A58A),
-            ),
+            Icon(icono, size: 65, color: const Color(0xFF80A58A)),
             const SizedBox(height: 15),
             Text(
               titulo,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text(
-              descripcion,
-              textAlign: TextAlign.center,
-            ),
+            Text(descripcion, textAlign: TextAlign.center),
             if (error != null) ...[
               const SizedBox(height: 8),
               Text(

@@ -1,4 +1,3 @@
-
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/database/database_helper.dart';
@@ -18,8 +17,7 @@ class HistorialCompraRepository {
       throw ArgumentError('La cantidad debe ser mayor que cero.');
     }
 
-    if (compra.precioUnitario < 0 ||
-        !compra.precioUnitario.isFinite) {
+    if (compra.precioUnitario < 0 || !compra.precioUnitario.isFinite) {
       throw ArgumentError('El precio unitario debe ser válido.');
     }
 
@@ -86,9 +84,7 @@ class HistorialCompraRepository {
   }
 
   // Consultar el historial de un producto.
-  Future<List<HistorialCompra>> obtenerPorProducto(
-    int productoId,
-  ) async {
+  Future<List<HistorialCompra>> obtenerPorProducto(int productoId) async {
     final db = await _db;
 
     final registros = await db.query(
@@ -102,9 +98,7 @@ class HistorialCompraRepository {
   }
 
   // Obtener las tiendas donde se ha comprado un producto.
-  Future<List<Tienda>> obtenerTiendasPorProducto(
-    int productoId,
-  ) async {
+  Future<List<Tienda>> obtenerTiendasPorProducto(int productoId) async {
     final db = await _db;
 
     final registros = await db.rawQuery(
@@ -123,9 +117,7 @@ class HistorialCompraRepository {
   }
 
   // Consultar la última compra de un producto.
-  Future<HistorialCompra?> obtenerUltimaCompra(
-    int productoId,
-  ) async {
+  Future<HistorialCompra?> obtenerUltimaCompra(int productoId) async {
     final db = await _db;
 
     final registros = await db.query(
