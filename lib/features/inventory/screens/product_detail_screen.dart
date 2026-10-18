@@ -101,6 +101,50 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
+
+  Future<void> _descartarLote(Lote lote) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Descartar lote'),
+          content: Text(
+            'Se descartarán ${lote.cantidad} unidad(es) de este lote. '
+            'Esta acción no se puede deshacer.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Descartar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true || !mounted) return;
+
+    try {
+      await _loteRepository.actualizar(lote.copyWith(cantidad: 0));
+      if (!mounted) return;
+
+      _recargar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lote descartado')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo descartar el lote.')),
+      );
+    }
+  }
+
   DateTime get _hoy {
     final ahora = DateTime.now();
     return DateTime(ahora.year, ahora.month, ahora.day);
@@ -236,7 +280,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _tarjetaLote(Lote lote) {
+    Widget _tarjetaLote(Lote lote) {
     final (texto, color) = _estaCaducado(lote)
         ? ('Caducado', const Color(0xFFC0392B))
         : _porCaducar(lote)
@@ -249,25 +293,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         leading: Icon(Icons.inventory_outlined, color: color),
         title: Text('Cantidad: ${lote.cantidad}'),
         subtitle: Text('Caduca: ${_fecha(lote.fechaCaducidad)}'),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            texto,
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                texto,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
+            IconButton(
+              tooltip: 'Descartar lote',
+              onPressed: () => _descartarLote(lote),
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
         ),
       ),
     );
   }
-
+  
   Widget _imagen(String? ruta) {
     if (ruta == null || ruta.isEmpty) return _imagenPredeterminada();
 
