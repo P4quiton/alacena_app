@@ -7,6 +7,8 @@ import '../../../data/models/lote.dart';
 import '../../../data/models/producto.dart';
 import '../../../data/repositories/lote_repository.dart';
 import '../../../data/repositories/producto_repository.dart';
+import '../../purchases/screens/purchase_form_screen.dart';
+import '../../purchases/screens/stores_screen.dart';
 import 'categories_screen.dart';
 import 'product_form_screen.dart';
 
@@ -143,11 +145,19 @@ class _InventoryScreenState extends State<InventoryScreen> {
     await consulta;
   }
 
-  // Abrir pantalla para registrar un nuevo producto.
+  void _mostrarMensaje(String mensaje) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensaje)),
+    );
+  }
+
+  // Registrar un producto nuevo.
   Future<void> _abrirNuevoProducto() async {
     final guardado = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (context) => const ProductFormScreen(),
+        builder: (_) => const ProductFormScreen(),
       ),
     );
 
@@ -155,28 +165,49 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     if (guardado == true) {
       await _actualizar();
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Producto registrado correctamente'),
-        ),
-      );
+      _mostrarMensaje('Producto registrado correctamente');
     }
   }
 
-  // Abrir administración de categorías.
-  Future<void> _abrirCategorias() async {
-    await Navigator.of(context).push<void>(
+  // Registrar una compra, con producto opcional preseleccionado.
+  Future<void> _abrirCompra({int? productoId}) async {
+    final guardado = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (context) => const CategoriesScreen(),
+        builder: (_) => PurchaseFormScreen(
+          productoId: productoId,
+        ),
       ),
     );
 
     if (!mounted) return;
 
-    // Recargamos porque los nombres o relaciones
-    // de categorías pudieron modificarse.
+    if (guardado == true) {
+      await _actualizar();
+      _mostrarMensaje('Compra registrada correctamente');
+    }
+  }
+
+  // Administrar categorías.
+  Future<void> _abrirCategorias() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => const CategoriesScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+    await _actualizar();
+  }
+
+  // Administrar tiendas.
+  Future<void> _abrirTiendas() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => const StoresScreen(),
+      ),
+    );
+
+    if (!mounted) return;
     await _actualizar();
   }
 
@@ -205,9 +236,49 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   expandedHeight: 115,
                   actions: [
                     IconButton(
-                      icon: const Icon(Icons.category_outlined),
-                      tooltip: 'Administrar categorías',
-                      onPressed: _abrirCategorias,
+                      tooltip: 'Registrar compra',
+                      onPressed: () => _abrirCompra(),
+                      icon: const Icon(Icons.add_shopping_cart_outlined),
+                    ),
+                    PopupMenuButton<String>(
+                      tooltip: 'Administrar alacena',
+                      icon: const Icon(Icons.more_vert),
+                      onSelected: (opcion) {
+                        switch (opcion) {
+                          case 'categorias':
+                            _abrirCategorias();
+                          case 'tiendas':
+                            _abrirTiendas();
+                          case 'compras':
+                            _abrirCompra();
+                        }
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'categorias',
+                          child: ListTile(
+                            leading: Icon(Icons.category_outlined),
+                            title: Text('Categorías'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'tiendas',
+                          child: ListTile(
+                            leading: Icon(Icons.store_outlined),
+                            title: Text('Mis tiendas'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'compras',
+                          child: ListTile(
+                            leading: Icon(Icons.receipt_long_outlined),
+                            title: Text('Registrar compra'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(width: 8),
                   ],
@@ -265,7 +336,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       Icons.inventory_2_outlined,
                       'Tu alacena está vacía',
                       'Presiona "Nuevo producto" para comenzar '
-                          'a organizar tu alacena.',
+                          'a organizar tus artículos.',
                     ),
                   )
                 else
@@ -326,9 +397,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(
-                  '${productos.length} productos registrados',
-                ),
+                Text('${productos.length} productos registrados'),
                 Text(
                   '$alertas productos con alertas',
                   style: const TextStyle(
@@ -385,23 +454,40 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       style: const TextStyle(fontSize: 12),
                     ),
                   const SizedBox(height: 7),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _nombreEstado(resumen.estado),
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _nombreEstado(resumen.estado),
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      const Spacer(),
+                      IconButton(
+                        tooltip: 'Registrar compra de ${producto.nombre}',
+                        onPressed: () => _abrirCompra(
+                          productoId: producto.id,
+                        ),
+                        icon: const Icon(
+                          Icons.add_shopping_cart_outlined,
+                          color: Color(0xFF51865D),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
