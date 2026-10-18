@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../calendar/screens/calendar_screen.dart';
 import '../../../data/repositories/carrito_repository.dart';
 import '../../cart/screens/cart_screen.dart';
 import '../../../data/models/lote.dart';
@@ -235,6 +236,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
     await _actualizarCarrito();
   }
 
+    Future<void> _abrirCalendario() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const CalendarScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -264,6 +271,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   floating: true,
                   expandedHeight: 115,
                   actions: [
+                      IconButton(
+                      tooltip: 'Calendario de caducidades',
+                      onPressed: _abrirCalendario,
+                      icon: const Icon(Icons.calendar_month_outlined),
+                      ),
                       IconButton(
                       tooltip: 'Carrito de compras',
                       onPressed: _abrirCarrito,
