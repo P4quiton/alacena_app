@@ -9,6 +9,9 @@ import '../../../data/repositories/categoria_repository.dart';
 import '../../../data/repositories/lote_repository.dart';
 import '../../../data/repositories/producto_repository.dart';
 import '../../../data/repositories/carrito_repository.dart';
+import '../../../data/models/historial_compra.dart';
+import '../../../data/models/tienda.dart';
+import '../../../data/repositories/historial_compra_repository.dart';
 import 'product_form_screen.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -16,11 +19,15 @@ class _DetalleProducto {
   final Producto producto;
   final Categoria? categoria;
   final List<Lote> lotes;
+  final List<Tienda> tiendas;
+  final List<HistorialCompra> compras;
 
   const _DetalleProducto({
     required this.producto,
     required this.categoria,
     required this.lotes,
+    required this.tiendas,
+    required this.compras,
   });
 }
 
@@ -37,7 +44,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final ProductoRepository _productoRepository = ProductoRepository();
   final CategoriaRepository _categoriaRepository = CategoriaRepository();
   final LoteRepository _loteRepository = LoteRepository();
-    final CarritoRepository _carritoRepository = CarritoRepository();
+  final HistorialCompraRepository _historialRepository = HistorialCompraRepository();
+  final CarritoRepository _carritoRepository = CarritoRepository();
 
   late Future<_DetalleProducto> _futureDetalle;
 
@@ -57,7 +65,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final categoria = await _categoriaRepository.obtenerPorId(
       producto.categoriaId,
     );
-    final lotes = await _loteRepository.obtenerActivosPorProducto(
+        final lotes =
+        await _loteRepository.obtenerActivosPorProducto(widget.productoId);
+    final tiendas = await _historialRepository.obtenerTiendasPorProducto(
+      widget.productoId,
+    );
+    final compras = await _historialRepository.obtenerPorProducto(
       widget.productoId,
     );
 
@@ -65,6 +78,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       producto: producto,
       categoria: categoria,
       lotes: lotes,
+      tiendas: tiendas,
+      compras: compras,
     );
   }
 
@@ -406,6 +421,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               itemBuilder: (context, index) => _tarjetaLote(lotes[index]),
             ),
           ),
+                SliverToBoxAdapter(child: _encabezadoHistorial(detalle)),
+        if (detalle.compras.isEmpty)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 32),
+              child: Text('Todavía no hay compras registradas.'),
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            sliver: SliverList.builder(
+              itemCount: detalle.compras.length,
+              itemBuilder: (context, index) {
+                return _tarjetaCompra(
+                  detalle.compras[index],
+                  detalle.tiendas,
+                );
+              },
+            ),
+          ),
       ],
     );
   }
@@ -447,6 +483,63 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               icon: const Icon(Icons.delete_outline),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+    Widget _encabezadoHistorial(_DetalleProducto detalle) {
+    final ultimaId = detalle.producto.ultimaTiendaId;
+    final ultima = detalle.tiendas.where((t) => t.id == ultimaId).firstOrNull;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Historial de compras',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text('Última tienda: ${ultima?.nombre ?? 'Sin compras registradas'}'),
+          if (detalle.tiendas.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text('Tiendas donde se ha comprado:'),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: detalle.tiendas.map((tienda) {
+                return Chip(
+                  avatar: const Icon(Icons.store_outlined, size: 18),
+                  label: Text(tienda.nombre),
+                );
+              }).toList(),
+            ),
+          ],
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  Widget _tarjetaCompra(HistorialCompra compra, List<Tienda> tiendas) {
+    final tienda = tiendas.where((t) => t.id == compra.tiendaId).firstOrNull;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        leading: const Icon(
+          Icons.receipt_long_outlined,
+          color: Color(0xFF51865D),
+        ),
+        title: Text(
+          '${compra.cantidad} unidad(es) en ${tienda?.nombre ?? 'tienda'}',
+        ),
+        subtitle: Text(
+          '${_fecha(compra.fechaCompra)} · '
+          '\$${compra.precioUnitario.toStringAsFixed(2)} c/u',
         ),
       ),
     );
