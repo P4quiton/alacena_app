@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/producto.dart';
 import '../../../data/repositories/carrito_repository.dart';
 import '../../../data/repositories/producto_repository.dart';
+import '../../purchases/screens/purchase_form_screen.dart';
 
 class _ItemCarrito {
   final Producto producto;
@@ -105,6 +106,24 @@ class _CartScreenState extends State<CartScreen> {
       _mensaje('${item.producto.nombre} quitado del carrito');
     } catch (_) {
       _mensaje('No se pudo quitar el producto.');
+      await _cargar();
+    }
+  }
+
+  Future<void> _registrarCompra(_ItemCarrito item) async {
+    final guardado = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => PurchaseFormScreen(productoId: item.producto.id),
+      ),
+    );
+    if (guardado != true || !mounted) return;
+    try {
+      await _carritoRepository.eliminarProducto(item.producto.id!);
+      if (!mounted) return;
+      setState(() => _items.remove(item));
+      _mensaje('Compra registrada: ${item.producto.nombre} salió de tu lista');
+    } catch (_) {
+      _mensaje('La compra se registró, pero no se pudo quitar del carrito.');
       await _cargar();
     }
   }
@@ -216,6 +235,7 @@ class _CartScreenState extends State<CartScreen> {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -227,34 +247,53 @@ class _CartScreenState extends State<CartScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  item.producto.nombre,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.producto.nombre,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Quitar una unidad',
+                          onPressed: item.cantidad > 1
+                              ? () => _cambiarCantidad(item, item.cantidad - 1)
+                              : null,
+                          icon: const Icon(Icons.remove_circle_outline),
+                        ),
+                        Text(
+                          '${item.cantidad}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Agregar una unidad',
+                          onPressed: () =>
+                              _cambiarCantidad(item, item.cantidad + 1),
+                          icon: const Icon(Icons.add_circle_outline),
+                        ),
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton.tonalIcon(
+                        onPressed: () => _registrarCompra(item),
+                        icon: const Icon(Icons.shopping_bag_outlined),
+                        label: const Text('Ya lo compré'),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              IconButton(
-                tooltip: 'Quitar una unidad',
-                onPressed: item.cantidad > 1
-                    ? () => _cambiarCantidad(item, item.cantidad - 1)
-                    : null,
-                icon: const Icon(Icons.remove_circle_outline),
-              ),
-              Text(
-                '${item.cantidad}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              IconButton(
-                tooltip: 'Agregar una unidad',
-                onPressed: () => _cambiarCantidad(item, item.cantidad + 1),
-                icon: const Icon(Icons.add_circle_outline),
               ),
             ],
           ),
