@@ -212,6 +212,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     if (!mounted) return;
     await _actualizar();
+    await _actualizarCarrito();
   }
 
   Future<void> _actualizarCarrito() async {

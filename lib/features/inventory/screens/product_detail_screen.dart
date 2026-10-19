@@ -8,7 +8,9 @@ import '../../../data/models/producto.dart';
 import '../../../data/repositories/categoria_repository.dart';
 import '../../../data/repositories/lote_repository.dart';
 import '../../../data/repositories/producto_repository.dart';
+import '../../../data/repositories/carrito_repository.dart';
 import 'product_form_screen.dart';
+import 'package:sqflite/sqflite.dart';
 
 class _DetalleProducto {
   final Producto producto;
@@ -35,6 +37,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final ProductoRepository _productoRepository = ProductoRepository();
   final CategoriaRepository _categoriaRepository = CategoriaRepository();
   final LoteRepository _loteRepository = LoteRepository();
+    final CarritoRepository _carritoRepository = CarritoRepository();
 
   late Future<_DetalleProducto> _futureDetalle;
 
@@ -90,6 +93,96 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       }
     } catch (_) {
       // Si el producto no se pudo cargar, no hay nada que editar.
+    }
+  }
+
+    Future<void> _eliminar() async {
+    try {
+      final detalle = await _futureDetalle;
+      if (!mounted) return;
+
+      final producto = detalle.producto;
+
+      final confirmar = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Eliminar producto'),
+            content: Text(
+              '¿Deseas eliminar "${producto.nombre}"? '
+              'Esta acción no se puede deshacer.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Eliminar'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmar != true || !mounted) return;
+
+      // Integridad referencial: con lotes hay compras en el historial.
+      final lotes = await _loteRepository.obtenerTodos();
+      final tieneLotes = lotes.any((lote) => lote.productoId == producto.id);
+
+      if (tieneLotes) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No se puede eliminar: el producto ya tiene compras '
+              'registradas y se conserva su historial.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Si estaba en el carrito, se quita antes de eliminarlo.
+      await _carritoRepository.eliminarProducto(producto.id!);
+      await _productoRepository.eliminar(producto.id!);
+
+      // Borrar la foto para no dejar archivos huérfanos.
+      final ruta = producto.imagenPath;
+      if (ruta != null && ruta.isNotEmpty) {
+        try {
+          final archivo = File(ruta);
+          if (await archivo.exists()) await archivo.delete();
+        } catch (_) {
+          // El producto ya se eliminó; la foto sobrante no es grave.
+        }
+      }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${producto.nombre} eliminado')),
+      );
+      Navigator.of(context).pop();
+    } on DatabaseException {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se puede eliminar: el producto tiene registros asociados.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ocurrió un error al eliminar.')),
+      );
     }
   }
 
@@ -190,6 +283,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             tooltip: 'Editar producto',
             onPressed: _editar,
             icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
+            tooltip: 'Eliminar producto',
+            onPressed: _eliminar,
+            icon: const Icon(Icons.delete_outline),
           ),
         ],
       ),
